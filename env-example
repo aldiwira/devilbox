@@ -819,6 +819,18 @@ BIND_LOG_DNS_QUERIES=0
 
 
 
+###
+### OpenLDAP Configuraion
+###
+LDAP_ADMIN_USERNAME=admin
+LDAP_ADMIN_PASSWORD=adminpassword
+LDAP_USERS=customuser
+LDAP_PASSWORDS=custompassword
+LDAP_ROOT=dc=aldi-backup,dc=local
+LDAP_ADMIN_DN=cn=admin,dc=aldi-backup,dc=local
+
+
+
 ################################################################################
 ###
 ### 11. Custom variables

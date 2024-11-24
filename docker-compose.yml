@@ -22,7 +22,7 @@
 ##   $ cp env-example .env
 ##
 
-version: '2.3'
+#version: '2.3'
 
 
 ################################################################################
@@ -94,7 +94,6 @@ services:
     networks:
       app_net:
         ipv4_address: 172.16.238.100
-
 
   # ------------------------------------------------------------
   # PHP
@@ -221,9 +220,11 @@ services:
       # Users SSH directory (read-only)
       - ${HOST_PATH_SSH_DIR}:/home/devilbox/.ssh:ro${MOUNT_OPTIONS}
 
+      # Mount config for zsh
+      - ${DEVILBOX_PATH}/cfg/zshrc/install-zsh.sh:/home/devilbox/install-zsh.sh
+    command: sh -c /home/devilbox/install-zsh.sh
     depends_on:
       - bind
-
 
   # ------------------------------------------------------------
   # Web Server
@@ -336,7 +337,6 @@ services:
       - bind
       - php
 
-
   # ------------------------------------------------------------
   # MySQL Database
   # ------------------------------------------------------------
@@ -373,7 +373,6 @@ services:
       - php
       - httpd
 
-
   # ------------------------------------------------------------
   # PostgreSQL
   # ------------------------------------------------------------
@@ -408,7 +407,6 @@ services:
       - php
       - httpd
 
-
   # ------------------------------------------------------------
   # Redis
   # ------------------------------------------------------------
@@ -434,7 +432,6 @@ services:
       - php
       - httpd
 
-
   # ------------------------------------------------------------
   # Memcached
   # ------------------------------------------------------------
@@ -454,7 +451,6 @@ services:
       - bind
       - php
       - httpd
-
 
   # ------------------------------------------------------------
   # MongoDB
@@ -482,7 +478,50 @@ services:
       - bind
       - php
       - httpd
-
+  # ------------------------------------------------------------
+  # Portainer
+  # ------------------------------------------------------------
+  portainer:
+    image: portainer/portainer-ce:latest
+    restart: always
+    ports:
+      - '9000:9000'
+      - '9443:9443'
+    volumes:
+      - ${DEVILBOX_PATH}/cfg/portainer:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      app_net:
+        ipv4_address: 172.16.238.17
+  # ------------------------------------------------------------
+  # Openldap and LAM
+  # ------------------------------------------------------------
+  openldap:
+    image: bitnami/openldap:latest
+    restart: always
+    ports:
+      - '1389:1389'
+    environment:
+      - LDAP_ADMIN_USERNAME=${LDAP_ADMIN_USERNAME:-admin}
+      - LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD:-password}
+      - LDAP_ROOT=${LDAP_ROOT:-dc=example,dc=org}
+      - LDAP_ADMIN_DN=${LDAP_ADMIN_DN:-cn=admin,dc=example,dc=org}
+    volumes:
+      - ${DEVILBOX_PATH}/cfg/openldap:/bitnami/openldap:rw${MOUNT_OPTIONS}
+    networks:
+      app_net:
+        ipv4_address: 172.16.238.18
+  lam:
+    image: ghcr.io/ldapaccountmanager/lam:8.9
+    restart: always
+    ports:
+      - '1380:80'
+    environment:
+      - LDAP_BASE_DN=${LAM_LDAP_BASE_DN:-dc=aldi-backup,dc=local}
+      - LDAP_SERVER=ldap://openldap:1389
+    networks:
+      app_net:
+        ipv4_address: 172.16.238.19
 
 ################################################################################
 # NETWORK
@@ -497,7 +536,6 @@ networks:
       config:
         - subnet: 172.16.238.0/24
           gateway: 172.16.238.1
-
 
 ################################################################################
 # VOLUMES
@@ -575,3 +613,9 @@ volumes:
   devilbox-mongo-4.4:
   devilbox-mongo-5.0:
   devilbox-mongo-latest:
+
+  # ------------------------------------------------------------
+  # Customize by @aldiwira
+  # ------------------------------------------------------------
+  openldap_data:
+    driver: local
